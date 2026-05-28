@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "description": "Apps Script automation that sets today's due date on undated incomplete Google Tasks.",
+  "engines": {
+    "node": ">=26"
+  },
   "scripts": {
     "lint": "eslint src/Code.js",
     "syntax": "node --check src/Code.js"
