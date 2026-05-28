@@ -8,6 +8,11 @@
 
 var CONFIG = {
   maxUpdates: 50,
+  triggerEveryHours: 2,
+  skipHours: {
+    start: 1,
+    end: 7,
+  },
   excludedTaskLists: [],
   excludedTitleMarkers: ['[no-date]', '#someday'],
   targetFunctionName: 'setTodayForUndatedTasks',
@@ -30,6 +35,10 @@ function setTodayForUndatedTasks() {
 }
 
 function createHourlyTrigger() {
+  createTwoHourlyTrigger();
+}
+
+function createTwoHourlyTrigger() {
   var handler = CONFIG.targetFunctionName;
   var triggers = ScriptApp.getProjectTriggers();
 
@@ -40,8 +49,13 @@ function createHourlyTrigger() {
     }
   });
 
-  var newTrigger = ScriptApp.newTrigger(handler).timeBased().everyHours(1).create();
-  console.log('Created hourly trigger for function="%s". triggerId="%s"', handler, newTrigger.getUniqueId());
+  var newTrigger = ScriptApp.newTrigger(handler).timeBased().everyHours(CONFIG.triggerEveryHours).create();
+  console.log(
+    'Created trigger for function="%s". everyHours=%s triggerId="%s"',
+    handler,
+    CONFIG.triggerEveryHours,
+    newTrigger.getUniqueId()
+  );
 }
 
 function runSetTodayForUndatedTasks_(options) {
@@ -57,6 +71,7 @@ function runSetTodayForUndatedTasks_(options) {
     updated: 0,
     skipped: 0,
     errors: 0,
+    skippedByQuietHours: false,
   };
 
   console.log(
@@ -66,6 +81,19 @@ function runSetTodayForUndatedTasks_(options) {
     options.maxUpdates,
     Session.getScriptTimeZone()
   );
+
+  if (!stats.dryRun && shouldSkipForQuietHours_()) {
+    stats.skippedByQuietHours = true;
+    console.log(
+      'Skipping run because current hour is inside quiet hours. hour=%s skipStart=%s skipEnd=%s timezone="%s"',
+      getCurrentScriptHour_(),
+      CONFIG.skipHours.start,
+      CONFIG.skipHours.end,
+      Session.getScriptTimeZone()
+    );
+    logSummary_(stats, startedAt);
+    return stats;
+  }
 
   forEachTaskList_(stats, function (taskList) {
     stats.taskListsSeen += 1;
@@ -81,18 +109,23 @@ function runSetTodayForUndatedTasks_(options) {
     });
   });
 
+  logSummary_(stats, startedAt);
+
+  return stats;
+}
+
+function logSummary_(stats, startedAt) {
   console.log(
-    'Finished undated task scan. dryRun=%s updated=%s skipped=%s errors=%s taskListsSeen=%s tasksSeen=%s elapsedMs=%s',
+    'Finished undated task scan. dryRun=%s updated=%s skipped=%s errors=%s taskListsSeen=%s tasksSeen=%s skippedByQuietHours=%s elapsedMs=%s',
     stats.dryRun,
     stats.updated,
     stats.skipped,
     stats.errors,
     stats.taskListsSeen,
     stats.tasksSeen,
+    stats.skippedByQuietHours,
     new Date().getTime() - startedAt.getTime()
   );
-
-  return stats;
 }
 
 function processTask_(stats, options, taskList, task, todayDue) {
@@ -244,4 +277,20 @@ function isExcludedTaskList_(taskList, excludedTaskLists) {
 function buildTodayDue_() {
   var today = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd');
   return today + 'T00:00:00.000Z';
+}
+
+function shouldSkipForQuietHours_() {
+  var hour = getCurrentScriptHour_();
+  var start = CONFIG.skipHours.start;
+  var end = CONFIG.skipHours.end;
+
+  if (start <= end) {
+    return hour >= start && hour <= end;
+  }
+
+  return hour >= start || hour <= end;
+}
+
+function getCurrentScriptHour_() {
+  return Number(Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'H'));
 }
