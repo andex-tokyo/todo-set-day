@@ -1,0 +1,32 @@
+{
+  "name": "todo-set-day",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Apps Script automation that sets today's due date on undated incomplete Google Tasks.",
+  "scripts": {
+    "lint": "eslint src/Code.js",
+    "syntax": "node --check src/Code.js"
+  },
+  "devDependencies": {
+    "@google/clasp": "^2.5.0",
+    "eslint": "^8.57.1"
+  },
+  "eslintConfig": {
+    "env": {
+      "es2021": true
+    },
+    "parserOptions": {
+      "ecmaVersion": 2021
+    },
+    "globals": {
+      "ScriptApp": "readonly",
+      "Session": "readonly",
+      "Tasks": "readonly",
+      "Utilities": "readonly",
+      "console": "readonly"
+    },
+    "rules": {
+      "no-unused-vars": "off"
+    }
+  }
+}

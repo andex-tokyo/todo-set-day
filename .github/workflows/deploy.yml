@@ -1,0 +1,38 @@
+name: Deploy Apps Script
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Write clasp auth
+        env:
+          CLASP_CREDENTIALS: ${{ secrets.CLASP_CREDENTIALS }}
+          CLASP_TOKEN: ${{ secrets.CLASP_TOKEN }}
+        run: |
+          node -e 'const fs=require("fs"); const credentials=JSON.parse(process.env.CLASP_CREDENTIALS); const token=JSON.parse(process.env.CLASP_TOKEN); fs.writeFileSync(`${process.env.HOME}/.clasprc.json`, JSON.stringify({ token, oauth2ClientSettings: credentials, isLocalCreds: false }, null, 2));'
+
+      - name: Write clasp project
+        env:
+          SCRIPT_ID: ${{ secrets.SCRIPT_ID }}
+        run: |
+          node -e 'const fs=require("fs"); fs.writeFileSync(".clasp.json", JSON.stringify({ scriptId: process.env.SCRIPT_ID, rootDir: "." }, null, 2));'
+
+      - name: Deploy
+        run: npx clasp push --force
