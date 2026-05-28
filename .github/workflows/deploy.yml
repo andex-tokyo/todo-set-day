@@ -1,6 +1,7 @@
 name: Deploy Apps Script
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
@@ -8,6 +9,9 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    concurrency:
+      group: apps-script-deploy
+      cancel-in-progress: true
 
     steps:
       - name: Checkout
@@ -20,6 +24,20 @@ jobs:
 
       - name: Install dependencies
         run: npm install
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run syntax check
+        run: npm run syntax
+
+      - name: Validate secrets
+        env:
+          CLASP_CREDENTIALS: ${{ secrets.CLASP_CREDENTIALS }}
+          CLASP_TOKEN: ${{ secrets.CLASP_TOKEN }}
+          SCRIPT_ID: ${{ secrets.SCRIPT_ID }}
+        run: |
+          node -e 'const required=["CLASP_CREDENTIALS","CLASP_TOKEN","SCRIPT_ID"]; const missing=required.filter((name)=>!process.env[name]); if (missing.length) { console.error(`Missing required GitHub Secrets: ${missing.join(", ")}`); process.exit(1); } JSON.parse(process.env.CLASP_CREDENTIALS); JSON.parse(process.env.CLASP_TOKEN);'
 
       - name: Write clasp auth
         env:

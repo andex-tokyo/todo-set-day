@@ -64,6 +64,8 @@ npx clasp push --force
 
 GitHub Actionsでは `main` ブランチへのpush時に同じく `clasp push --force` を実行します。
 
+Actions画面から `Deploy Apps Script` workflowを手動実行することもできます。
+
 ## GitHub Secrets設定
 
 リポジトリのSettings > Secrets and variables > Actionsに以下を設定してください。
@@ -71,6 +73,8 @@ GitHub Actionsでは `main` ブランチへのpush時に同じく `clasp push --
 - `CLASP_CREDENTIALS`: `~/.clasprc.json` の `oauth2ClientSettings` のJSON
 - `CLASP_TOKEN`: `~/.clasprc.json` の `token` のJSON
 - `SCRIPT_ID`: Apps ScriptのScript ID
+
+セキュリティ上、ローカルのOAuthトークンを自動でGitHub Secretsへ登録する操作は行わず、GitHubの画面またはGitHub CLIで手動登録してください。
 
 例:
 

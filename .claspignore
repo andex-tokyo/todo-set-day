@@ -1,0 +1,16 @@
+# ignore all files
+**/**
+
+# allow Apps Script source and manifest
+!appsscript.json
+!src/**/*.js
+!src/**/*.html
+
+# keep local/development files out of clasp push
+**/node_modules/**
+**/.git/**
+**/.github/**
+**/.clasp.json.example
+**/package.json
+**/package-lock.json
+**/README.md
